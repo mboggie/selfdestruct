@@ -3,7 +3,7 @@
 
 import twitstream
 
-jargonlist = ["gamify", "digital space", "mobile space", "plus up", "gamification"]
+jargonlist = ["touch base"," productize", "table stakes", "game changer", "action item", "take this offline", "time box", "methodology", "solomo", "circle back", "the ask", "creatives", "gamify", "digital space", "mobile space", "plus up", "gamification"]
 
 def callback(status):
 	keyword = None
@@ -12,11 +12,20 @@ def callback(status):
 			keyword = word
 	
 	if keyword is None:
-		print "False positive, due to Twitter not honoring spaces."
 		return
 				
+	#check if this is a straight RT; if so, skip it
+	#check for special cases / regex matches for the word that disqualify it (i.e. "the asking")
+	#insert the user / word if they don't exist, or...
+	#update the count if they do
+	
+	
 	print "%s said a jargon word! (%s) in %s" % (status.get('user', {}).get('screen_name'), keyword, status.get("text"))
+	
+
+
+
 #end 
 
 
-twitstream.track("mattboggie", "5631jb", callback, jargonlist).run()
+twitstream.track("jargonjar", "coldFus10n", callback, jargonlist).run()

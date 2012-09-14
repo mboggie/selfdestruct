@@ -1,0 +1,17 @@
+DROP USER 'jar';
+CREATE USER 'jar' IDENTIFIED BY 'spirograph';
+CREATE DATABASE IF NOT EXISTS jargon;
+CONNECT jargon;
+CREATE TABLE IF NOT EXISTS mentions
+(
+	handle VARCHAR(22) CHARACTER SET utf8,
+	term VARCHAR(50) CHARACTER SET utf8,
+	count INT(6)
+	
+);
+CREATE TABLE IF NOT EXISTS violators
+(
+	handle VARCHAR(22) CHARACTER SET utf8,
+	followed BOOLEAN,
+	totalfine FLOAT
+);
