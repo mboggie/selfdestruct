@@ -3,34 +3,25 @@
 # Note: Refactoring to use the better-maintained Python Twitter Tools APIs and hooks (https://github.com/sixohsix/twitter)
 
 from twitter import *
-
-#jargonlist = ["touch base"," productize", "table stakes", "game changer", "action item", "take this offline", "time box", "methodology", "solomo", "circle back", "the ask", "creatives", "gamify", "digital space", "mobile space", "plus up", "gamification"]
+import datetime
 
 jargonlist = ["longing for", "yearning for"]
 
-def parse_for_jargon(status):
-	keyword = None
-
-	if 'text' in status:
-		for word in jargonlist:
-			if word in status['text'].lower():
-				keyword = word
-		
-		if keyword is None:
-			#print "bzz"
-			return
-					
-		# check if this is a straight RT; if so, skip it
-		# check for special cases / regex matches for the word that disqualify it (i.e. "the asking")
-		# insert the user / word if they don't exist, or...
-		# update the count if they do
-
-		print "%s said \"%s\" in %s" % (status['user']['screen_name'], keyword, status['text'])
+def schedule(status):
+	#simple case: we did the search on SD5 first. start there.
 	
-#end 
+	createtime = datetime.strptime(status['createdat'])
+	destroytime = createtime + datetime.timedelta(0,5*60)
+
+	#schedule destruction at destroytime
+
+	print "%s wants to destroy a tweet at  %Z: \n\"%s\"" % (status['user']['screen_name'], destroytime, status['text'])
+	
+#end schedule 
 
 if __name__ == "__main__":
-	twitter_stream = TwitterStream(auth=UserPassAuth("jargonjar", "coldFus10n"))
-	iterator = twitter_stream.statuses.sample()
+	t = Twitter(auth=UserPassAuth("jargonjar", "abcdefg"))
+	iterator = t.search.tweets(q="#sd5")
+
 	for tweet in iterator:
-		parse_for_jargon(tweet)
+		schedule(tweet)
