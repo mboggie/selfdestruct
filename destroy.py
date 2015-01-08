@@ -5,7 +5,7 @@
 from twitter import *
 from datetime import datetime as dt, timedelta
 from dateutil.parser import parse
-import os, sys, json, time
+import os, sys, json, time, string, re
 import urllib, httplib, base64
 
 jargonlist = ["longing for", "yearning for"]
@@ -47,18 +47,26 @@ def getTwitterAppOauth():
 	print resp.status, resp.reason
 	bearer_token = json.loads(resp.read())
 	if bearer_token['token_type'] == "bearer":
-		return bearer_token['access_token']
+		return urllib.unquote(bearer_token['access_token']).decode('utf-8')
 	else:
 		raise ValueError("Expected bearer token from twitter oauth, received %s", bearer_token['token_type'])
 
 #end getTwitterAppOauth
 
 def schedule(tweet):
-	#simple case: we did the search on SD5 first. start there.
 	
+	#find the offset required
+	searchresult = re.search("#sd(\d+)", tweet['text'])
+	ttl = searchresult.group(1)
+	if len(ttl) > 0:
+		ttl = int(ttl)
+	else:
+		ttl = 9
+ 	
+ 	# NOTE: Twitter "created_at" attribute is always in UTC
 	createstring = tweet['created_at']
 	createtime = parse(createstring)
-	destroytime = createtime + timedelta(0,5*60)
+	destroytime = createtime + timedelta(0,ttl*60)
 
 	#schedule destruction at destroytime
 
@@ -69,27 +77,34 @@ def schedule(tweet):
 if __name__ == "__main__":
 	#initialize our authorization as an application
 	authtoken = getTwitterAppOauth()
-	authtoken = urllib.unquote(authtoken).decode('utf-8')
 
 	#connect to Twitter
 	t = Twitter(auth=OAuth2(bearer_token=authtoken))
 
 	#begin loop
-	sinceid = 240859602684612608
+	sinceid = 240859602684612608 #random, yet valid, id from 2012. Twitter doesn't like it if you just pass 0.
+
+	#this will be a while loop later
 	for i in range(0, 5):
 
+		#for each user who has signed up
 		#retrieve all tweets from user since last we checked
-		tweets = t.statuses.user_timeline(screen_name="nytimes", since_id=sinceid)
+		tweets = t.statuses.user_timeline(screen_name="mattboggie", since_id=sinceid)
 		print "%d run; %d tweets received" % (i,len(tweets))
 
 	#analyze 
-		for tweet in tweets:
-		# 	schedule(tweet)
-			print tweet['text']
+		for tweet in tweets:	
+			# 	see if this tweet has been marked to selfdestruct
+			status = string.find(string.lower(tweet['text']), "#sd")
+			if status > 0:
+				schedule(tweet)
+
+			#	reset this user's pointer so future calls don't return tweets we've already seen
 			if tweet['id'] > sinceid:
 				sinceid = tweet['id']
-				print sinceid
-		time.sleep(30)
+
+		# only check our userlist once each minute
+		time.sleep(60)
 		#end inner for
 	#end outer for
 #end
