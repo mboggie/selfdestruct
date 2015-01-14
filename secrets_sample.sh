@@ -1,2 +1,4 @@
 export SDAPP_CONSUMER_KEY=AAA
 export SDAPP_CONSUMER_SECRET=BBB
+export SDHOST=http://localhost
+export SDPORT=7890

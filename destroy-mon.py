@@ -8,8 +8,6 @@ from dateutil.parser import parse
 import os, sys, json, time, string, re
 import urllib, httplib, base64
 
-jargonlist = ["longing for", "yearning for"]
-
 try:
 	
     CONSUMER_KEY = os.environ["SDAPP_CONSUMER_KEY"]
@@ -19,7 +17,7 @@ try:
     # token_secret = os.environ["SDAPP_ACCESS_SECRET"]
 
 except KeyError:
-	print "Please set your \"SDAPP_\" environment variables for Twitter OAuth before running destroy.py."
+	print "Please set your \"SDAPP_\" environment variables for Twitter OAuth before running destroy-mon.py."
 	sys.exit(2)
 
 def getTwitterAppOauth():
