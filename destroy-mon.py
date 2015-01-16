@@ -7,11 +7,18 @@ from datetime import datetime as dt, timedelta
 from dateutil.parser import parse
 import os, sys, json, time, string, re
 import urllib, httplib, base64
+import beanstalkc
+
+# Default TTL = how long an #SD tweet lasts if no number of minutes has been specified
+DEFAULT_TTL = 0.1
 
 try:
 	
     CONSUMER_KEY = os.environ["SDAPP_CONSUMER_KEY"]
     CONSUMER_SECRET = os.environ["SDAPP_CONSUMER_SECRET"]
+    BEANSTALK_HOST = os.environ["SDAPP_BEANSTALK_HOST"]
+    BEANSTALK_PORT = int(os.environ["SDAPP_BEANSTALK_PORT"])
+    BEANSTALK_TUBE = os.environ["SDAPP_BEANSTALK_TUBE"]
     # in future tokens will be addressed programmatically; this is just for now
     # token = os.environ["SDAPP_ACCESS_KEY"],
     # token_secret = os.environ["SDAPP_ACCESS_SECRET"]
@@ -19,6 +26,13 @@ try:
 except KeyError:
 	print "Please set your \"SDAPP_\" environment variables for Twitter OAuth before running destroy-mon.py."
 	sys.exit(2)
+
+print BEANSTALK_PORT
+beanstalk = beanstalkc.Connection(host=BEANSTALK_HOST, port=BEANSTALK_PORT)
+beanstalk.connect()
+
+# use tube to place tweets for destruction
+beanstalk.use(BEANSTALK_TUBE)
 
 def getTwitterAppOauth():
 	encoded_CONSUMER_KEY = urllib.quote(CONSUMER_KEY)
@@ -51,25 +65,40 @@ def getTwitterAppOauth():
 
 #end getTwitterAppOauth
 
-def schedule(tweet):
+def schedule(tweet, authtoken):
 	
 	#find the offset required
 	searchresult = re.search("#sd(\d+)", tweet['text'])
-	ttl = searchresult.group(1)
-	if len(ttl) > 0:
-		ttl = int(ttl)
-	else:
-		ttl = 9
- 	
- 	# NOTE: Twitter "created_at" attribute is always in UTC
-	createstring = tweet['created_at']
-	createtime = parse(createstring)
-	destroytime = createtime + timedelta(0,ttl*60)
-
+	if searchresult: 
+		ttl = searchresult.group(1)
+		if len(ttl) > 0:
+			ttl = int(ttl)
+		else:
+			ttl = DEFAULT_TTL
+ 	else:
+ 		ttl = DEFAULT_TTL
 	#schedule destruction at destroytime
 
-	print "%s wants to destroy a tweet at  %s: \n\"%s\"" % (tweet['user']['screen_name'], dt.strftime(destroytime, "%c"), tweet['text'])
-	
+	#right / hard way: two date comparisons that respect timezone
+	# NOTE: Twitter "created_at" attribute is always in UTC
+	# createstring = tweet['created_at']
+	# createtime = parse(createstring)
+	# destroytime = createtime + timedelta(0,ttl*60)
+	# #finish calculations here because python sucks at timezone
+
+	#lazy way: ttl*60seconds = beanstalk delay
+	destroytime = ttl*60
+	print "[destroy-mon] %s wants to destroy a tweet in %s min: \n\"%s\"" % (tweet['user']['screen_name'], destroytime, tweet['id'])
+	job = {}
+	# PUT IN REDIS HERE
+	job['usertoken'] = AAA
+	job['usersecret'] = BBB
+	job['id'] = tweet['id']
+	job['screen_name'] = tweet['user']['screen_name']
+
+	# kludge to make unicode string a string string that beanstalk likes. NEED TO FIX FOR REAL 
+	beanstalk.put(json.dumps(job), delay=destroytime)
+
 #end schedule 
 
 if __name__ == "__main__":
@@ -95,11 +124,13 @@ if __name__ == "__main__":
 			# 	see if this tweet has been marked to selfdestruct
 			status = string.find(string.lower(tweet['text']), "#sd")
 			if status > 0:
-				schedule(tweet)
+				schedule(tweet, authtoken)
 
 			#	reset this user's pointer so future calls don't return tweets we've already seen
 			if tweet['id'] > sinceid:
 				sinceid = tweet['id']
+
+			schedule(tweet, authtoken)
 
 		# only check our userlist once each minute
 		time.sleep(60)
