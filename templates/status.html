@@ -1,0 +1,42 @@
+{% autoescape None %}
+<html>
+<head>
+
+    <title>Self-Destruct</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/list.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <!--typekit-->
+    <script type="text/javascript" src="//use.typekit.net/sfu1xqz.js"></script>
+    <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+
+</head>
+<body>
+<div id="container">
+    <div id="rnd-intro"><a href="http://www.nytlabs.com"><img src="../static/img/nytlabs.png" /></a></div> 
+<!--     <div id="nav">
+        <div id="username"></div> &nbsp;|&nbsp; <a href="/logout" id="logout">Sign out</a>
+    </div> -->
+
+    <br class="clear" />
+    <div id="logo">
+        Selfdestruct Logo Here
+    </div>
+
+   <div id="intro">
+        <p>
+            Hi, {{ screen_name }}. Thanks for signing up for Selfdestruct.
+        </p>
+        <p>
+            So far, {{ count }} tweets have been deleted for you from your account.
+        </p>
+   </div>
+    If you no longer want Selfdestruct to monitor your Twitter stream, <a href="https://twitter.com/settings/applications" id="login">Edit your App Settings on Twitter</a>
+
+   <!--footer-->
+    <div id="footer">Selfdestruct is a project of <a href="http://www.nytlabs.com">The New York Times R&amp;D Lab</a> &nbsp;|&nbsp; <a href="http://www.nytimes.com/content/help/rights/privacy/policy/privacy-policy.html">Privacy</a> &nbsp;|&nbsp; <a href="http://www.nytimes.com/content/help/rights/terms/terms-of-service.html">Terms of Service</a></div>
+
+</div>
+
+</body>
+</html>
