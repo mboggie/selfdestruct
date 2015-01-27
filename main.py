@@ -3,14 +3,14 @@
 import tornado.web
 import tornado.ioloop
 import tornado.gen
-import Twython
+from twython import Twython
 import tornadoredis
 import redis
+import os, sys, json
 
 class Status(tornado.web.RequestHandler):
-	def get(self):
-
-		user_key = self.get_secure_cookie('selfdestruct')
+    def get(self):
+        user_key = self.get_secure_cookie('selfdestruct')
 
         if not user_key:
             self.redirect("/")
@@ -27,7 +27,7 @@ class Status(tornado.web.RequestHandler):
         count = rserver.get("deletecount:"+screen_name)
 		#tk: show stats of what's been deleted, what's queued, etc
 		#for now, just render a "yeah, I know you" page
-		self.render("status.html", count=count, screen_name=screen_name)
+        self.render("status.html", count=count, screen_name=screen_name)
 
 class LoginSuccess(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -36,6 +36,7 @@ class LoginSuccess(tornado.web.RequestHandler):
         oauth_verifier = self.get_argument('oauth_verifier')
         oauth_token = self.get_argument('oauth_token')
         secret = self.get_secure_cookie("sd_auth_secret")
+        print ("trying to finish auth with "+ secret)
         twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, oauth_token, secret)
         final_step = twitter.get_authorized_tokens(oauth_verifier)
         screen_name = final_step['screen_name']
@@ -56,7 +57,9 @@ class TwitterLoginHandler(tornado.web.RequestHandler):
     def get(self):
         if not self.get_secure_cookie('selfdestruct'):
             twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET)
-            auth = twitter.get_authentication_tokens(callback_url= SDHOST+'/success')
+            print (CONSUMER_KEY + " : " + CONSUMER_SECRET)
+            auth = twitter.get_authentication_tokens(callback_url= SDHOST+":"+SDPORT+'/success')
+            print ("Back in python from twitter. ")
             oauth_token = auth['oauth_token']
             oauth_token_secret = auth['oauth_token_secret']
             self.set_secure_cookie("sd_auth_token",oauth_token)
@@ -81,9 +84,9 @@ class Intro(tornado.web.RequestHandler):
 
 try:	
     CONSUMER_KEY = os.environ["SDAPP_CONSUMER_KEY"]
-    CONSUMER_SECRET = os.environ["SDAPP_CONSUMER_KEY"]
-   	SDHOST = os.environ["SDAPP_HOST"]
-   	SDPORT = os.environ["SDAPP_PORT"]    
+    CONSUMER_SECRET = os.environ["SDAPP_CONSUMER_SECRET"]
+    SDHOST = os.environ["SDAPP_HOST"]
+    SDPORT = os.environ["SDAPP_PORT"]
     REDIS_HOST = os.environ["SDAPP_REDIS_HOST"]
     REDIS_PORT = int(os.environ["SDAPP_REDIS_PORT"])
 
@@ -109,7 +112,7 @@ application = tornado.web.Application([
     (r"/login", TwitterLoginHandler),
     (r"/success", LoginSuccess),
     (r"/status", Status)
-    (r"/cancel", Cancel)
+    #(r"/cancel", Cancel)
 ], **settings)
 
 if __name__ == "__main__":
@@ -117,6 +120,6 @@ if __name__ == "__main__":
 
 	#start tornado listener for web interface
     application.listen(SDPORT)
-    logger.info("Selfdestruct Logger Inner starting on port %s" %SDPORT)
+    print("Selfdestruct Logger Inner starting on port %s" %SDPORT)
     tornado.ioloop.IOLoop.instance().start()
 
