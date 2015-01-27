@@ -68,6 +68,10 @@ class TwitterLoginHandler(tornado.web.RequestHandler):
         else:
             self.redirect('/status')
 
+class Settings(tornado.web.RequestHandler):
+    def get(self):
+        self.render("settings.html")
+
 class About(tornado.web.RequestHandler):
 	def get(self):
 		self.render("about.html")
@@ -112,7 +116,7 @@ application = tornado.web.Application([
     (r"/login", TwitterLoginHandler),
     (r"/success", LoginSuccess),
     (r"/status", Status)
-    #(r"/cancel", Cancel)
+    (r"/settings", Settings)
 ], **settings)
 
 if __name__ == "__main__":
