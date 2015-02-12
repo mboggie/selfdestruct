@@ -28,6 +28,7 @@ except KeyError:
 	print "Please set your \"SDAPP_\" environment variables for Twitter OAuth before running destroy-mon.py."
 	sys.exit(2)
 
+#print (BEANSTALK_HOST + ":" + str(BEANSTALK_PORT))
 beanstalk = beanstalkc.Connection(host=BEANSTALK_HOST, port=BEANSTALK_PORT)
 beanstalk.connect()
 
@@ -75,31 +76,42 @@ def schedule(tweet):
 if __name__ == "__main__":
 
 	#connect to Twitter
-	t = Twython(CONSUMER_KEY, CONSUMER_SECRET, oauth_version=2)
-	authtoken = t.obtain_access_token()
-	t = Twython(CONSUMER_KEY, access_token=authtoken)
+	# t = Twython(CONSUMER_KEY, CONSUMER_SECRET, oauth_version=2)
+	# authtoken = t.obtain_access_token()
+	# t = Twython(CONSUMER_KEY, access_token=authtoken)
 
 	#get list of subscribers
-	userlist = rserver.get("users")
+	userlist = rserver.lrange("users", 0, rserver.llen("users"))
 	
 	#begin loop
 	for screen_name in userlist:
-		since_id = rserver.get("sinceid:"+screen_name)
+		#in this area, add try/except areas for db calls and for Twitter info
+		since_id = rserver.get("since_id:"+screen_name)
 		if since_id is None:
 			since_id = DEFAULT_SINCE_ID
+		else:
+			since_id = long(since_id)
+		creds = rserver.get("credentials:"+screen_name)
+		creds = json.loads(creds)
+		# connect to Twitter with keys for each individual user
+		t = Twython(CONSUMER_KEY, CONSUMER_SECRET, creds["token"], creds["secret"])
+		
 		#for each user who has signed up, retrieve all tweets from user since last we checked
-		tweets =twitter.get_user_timeline(screen_name=screen_name, since_id=since_id)
+		tweets =t.get_user_timeline(screen_name=screen_name, since_id=since_id)
 		print "%d tweets received for %s" % (len(tweets), screen_name)
 
 		for tweet in tweets:	
 			# 	see if this tweet has been marked to selfdestruct
+			print tweet['id']
 			status = string.find(string.lower(tweet['text']), "#sd")
 			if status > 0:
 				schedule(tweet)
 
 			#	reset this user's pointer so future calls don't return tweets we've already seen
-			if tweet['id'] > sinceid:
-				rserver.set("sinceid:"+screen_name, tweet['id'])
+			if tweet['id'] > since_id:
+				rserver.set("since_id:"+screen_name, tweet['id'])
+				since_id = tweet['id']
+				print("setting since_id to " + str(tweet['id']))
 		#end inner for
 	#end outer for
 #end
