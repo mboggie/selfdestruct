@@ -63,7 +63,7 @@ def schedule(tweet):
 	#lazy way: ttl*60seconds = beanstalk delay
 	destroytime = ttl*60
 
-	print "[destroy-mon] %s wants to destroy a tweet in %s min: \n\"%s\"" % (tweet['user']['screen_name'], destroytime, tweet['id'])
+	print "[destroy-mon] %s wants to destroy a tweet in %s sec: \n\"%s\"" % (tweet['user']['screen_name'], destroytime, tweet['id'])
 
 	job = {}
 	job['id'] = tweet['id']

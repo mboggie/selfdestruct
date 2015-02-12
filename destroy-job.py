@@ -36,11 +36,13 @@ while True:
     tweet = json.loads(jobstr)
 
     #job will consist of tweet[id] and tweet[screenname] -- need to retrieve token and secret from redis
-    cred = rserve.get("credentials:"+tweet['screen_name'])
+    cred = rserver.get("credentials:"+tweet['screen_name'])
+    cred = json.loads(cred)
 
-	t = Twython(CONSUMER_KEY, CONSUMER_SECRET, cred['token'], cred['secret'])
-    t.destroy_status(tweet['id'])
+    t = Twython(CONSUMER_KEY, CONSUMER_SECRET, cred['token'], cred['secret'])
+    t.destroy_status(id=tweet['id'])
 
     #INCREMENT COUNT IN REDIS
+    print ("deleted tweet "+ str(tweet['id']))
     rserve.incr("deletecount:"+tweet['screen_name'], 1)
 
