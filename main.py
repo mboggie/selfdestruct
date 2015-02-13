@@ -115,7 +115,7 @@ application = tornado.web.Application([
     (r"/", Intro),
     (r"/login", TwitterLoginHandler),
     (r"/success", LoginSuccess),
-    (r"/status", Status)
+    (r"/status", Status),
     (r"/settings", Settings)
 ], **settings)
 
