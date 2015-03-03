@@ -7,6 +7,8 @@ from twython import Twython
 import tornadoredis
 import redis
 import os, sys, json
+import argparse
+import ConfigParser
 
 class Status(tornado.web.RequestHandler):
     def get(self):
@@ -24,10 +26,16 @@ class Status(tornado.web.RequestHandler):
             self.clear_cookie('selfdestruct')
             self.redirect("/")
             return
-        count = rserver.get("deletecount:"+screen_name)
-		#tk: show stats of what's been deleted, what's queued, etc
-		#for now, just render a "yeah, I know you" page
-        self.render("status.html", count=count, screen_name=screen_name)
+        creds = rserver.get("credentials:"+screen_name)
+        if creds is None:
+            #user has revoked access previously; redirect them to the homepage to oauth again
+            self.clear_cookie('selfdestruct')
+            self.redirect("/")
+        else:
+            count = rserver.get("deletecount:"+screen_name)
+    		#tk: show stats of what's been deleted, what's queued, etc
+    		#for now, just render a "yeah, I know you" page
+            self.render("status.html", count=count, screen_name=screen_name)
 
 class LoginSuccess(tornado.web.RequestHandler):
     @tornado.web.asynchronous
@@ -86,17 +94,27 @@ class Intro(tornado.web.RequestHandler):
 
 ###################################################
 
-try:	
-    CONSUMER_KEY = os.environ["SDAPP_CONSUMER_KEY"]
-    CONSUMER_SECRET = os.environ["SDAPP_CONSUMER_SECRET"]
-    SDHOST = os.environ["SDAPP_HOST"]
-    SDPORT = os.environ["SDAPP_PORT"]
-    REDIS_HOST = os.environ["SDAPP_REDIS_HOST"]
-    REDIS_PORT = int(os.environ["SDAPP_REDIS_PORT"])
+# parse arguments
+argparser = argparse.ArgumentParser()
+argparser.add_argument('config', help='path to config file')
+args = argparser.parse_args()
 
-except KeyError:
-	print "Please set your \"SDAPP_\" environment variables for Twitter OAuth before running main.py."
-	sys.exit(2)
+
+# read application config
+cfg = ConfigParser.ConfigParser()
+cfg.read(args.config)
+
+try:	
+    CONSUMER_KEY = cfg.get('twitter', 'app_key')
+    CONSUMER_SECRET = cfg.get('twitter', 'app_secret')
+    SDHOST = cfg.get('selfdestruct', 'host')
+    SDPORT = cfg.get('selfdestruct', 'port')
+    REDIS_HOST = cfg.get('redis', 'host')
+    REDIS_PORT = int(cfg.get('redis', 'port'))
+
+except:
+    print "Please set your config variables properly in %s before running main.py." % args.config
+    sys.exit(2)
 
 conn = tornadoredis.Client(host=REDIS_HOST, port=REDIS_PORT)
 conn.connect()
