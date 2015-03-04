@@ -29,7 +29,7 @@ try:
     REDIS_HOST = cfg.get('redis', 'host')
     REDIS_PORT = int(cfg.get('redis', 'port'))
 
-except KeyError:
+except:
     print "Please set your config variables properly in %s before running destroy-job.py." %args.config
     sys.exit(2)
 

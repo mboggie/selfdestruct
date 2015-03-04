@@ -23,12 +23,15 @@ class Status(tornado.web.RequestHandler):
         except:
             #doublecheck the cookie isn't hosed
             #if it is, kill it and have the user come back thru the oauth process
+            rserver.lrem("users", screen_name, 0)
             self.clear_cookie('selfdestruct')
             self.redirect("/")
             return
         creds = rserver.get("credentials:"+screen_name)
         if creds is None:
             #user has revoked access previously; redirect them to the homepage to oauth again
+            #note: in most cases screen_name will not be in list here, but just in case.
+            rserver.lrem("users", screen_name, 0)
             self.clear_cookie('selfdestruct')
             self.redirect("/")
         else:
@@ -51,10 +54,10 @@ class LoginSuccess(tornado.web.RequestHandler):
         credentials = {}
         credentials['token'] = final_step['oauth_token']
         credentials['secret'] = final_step['oauth_token_secret']
-        #save login info
+        # save login info
         yield tornado.gen.Task(conn.set, "credentials:"+screen_name, json.dumps(credentials))
         yield tornado.gen.Task(conn.lpush, "users", screen_name)
-        #set cookie
+        # set cookie
         cookie_data = {"token": final_step['oauth_token'], "secret": final_step['oauth_token_secret'], "screen_name": screen_name}
         self.set_secure_cookie("selfdestruct", json.dumps(cookie_data))
         self.clear_cookie("sd_auth_token")
@@ -98,7 +101,6 @@ class Intro(tornado.web.RequestHandler):
 argparser = argparse.ArgumentParser()
 argparser.add_argument('config', help='path to config file')
 args = argparser.parse_args()
-
 
 # read application config
 cfg = ConfigParser.ConfigParser()

@@ -5,6 +5,7 @@
 from twython import Twython, TwythonAuthError
 from datetime import datetime as dt, timedelta
 from dateutil.parser import parse
+from dateutil.tz import tzlocal
 import os, sys, json, time, string, re
 import urllib, httplib, base64
 import beanstalkc
@@ -67,21 +68,27 @@ def schedule(tweet):
 
 	# right / hard way: two date comparisons that respect timezone
 	# NOTE: Twitter "created_at" attribute is always in UTC
-	# createstring = tweet['created_at']
-	# createtime = parse(createstring)
-	# destroytime = createtime + timedelta(0,ttl*60)
-	# #finish calculations here because python sucks at timezone
+	createstring = tweet['created_at']
+	createtime = parse(createstring)
+	print createtime
+	destroytime = createtime + timedelta(0,ttl*60)
+	now = dt.now(tzlocal())
+	print now
+	offset = destroytime - now
+	delay = (offset.days *24*60*60) + offset.seconds
+	print "calculated %d delay"%delay
+
 
 	#lazy way: ttl*60seconds = beanstalk delay
-	destroytime = ttl*60
+	#delay = ttl*60
 
-	print "[destroy-mon] %s wants to destroy a tweet in %s sec: \n\"%s\"" % (tweet['user']['screen_name'], destroytime, tweet['id'])
+	print "[destroy-mon] %s wants to destroy a tweet in %s sec: \n\"%s\"" % (tweet['user']['screen_name'], delay, tweet['id'])
 
 	job = {}
 	job['id'] = tweet['id']
 	job['screen_name'] = tweet['user']['screen_name']
 
-	beanstalk.put(json.dumps(job), delay=destroytime)
+	beanstalk.put(json.dumps(job), delay=delay)
 
 #end schedule 
 
@@ -108,6 +115,7 @@ if __name__ == "__main__":
 		creds = rserver.get("credentials:"+screen_name)
 		if creds is None:
 			print "%s has revoked access"%screen_name
+			rserver.lrem("users", screen_name, 0)
 		else:
 			creds = json.loads(creds)
 			# connect to Twitter with keys for each individual user
