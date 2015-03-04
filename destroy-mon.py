@@ -12,10 +12,17 @@ import beanstalkc
 import redis
 import argparse
 import ConfigParser
+import logging
 
 # Default TTL = how long an #SD tweet lasts if no number of minutes has been specified
 DEFAULT_TTL = 5
 DEFAULT_SINCE_ID = 240859602684612608 #random, yet valid, id from 2012. Twitter doesn't like it if you just pass 0.
+
+# setup logging
+logger = logging.getLogger("selfdestruct")
+logger.setLevel(logging.DEBUG)
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=FORMAT)
 
 # parse arguments
 argparser = argparse.ArgumentParser()
@@ -38,10 +45,10 @@ try:
     REDIS_PORT = int(cfg.get('redis', 'port'))
 
 except:
-	print "Please set your config variables properly in %s before running destroy-mon.py." %args.config
+	logger.critical("Please set your config variables properly in %s before running destroy-mon.py." %args.config)
 	sys.exit(2)
 
-#print (BEANSTALK_HOST + ":" + str(BEANSTALK_PORT))
+#connect to beanstalk queue
 beanstalk = beanstalkc.Connection(host=BEANSTALK_HOST, port=BEANSTALK_PORT)
 beanstalk.connect()
 
@@ -70,19 +77,19 @@ def schedule(tweet):
 	# NOTE: Twitter "created_at" attribute is always in UTC
 	createstring = tweet['created_at']
 	createtime = parse(createstring)
-	print createtime
+	logger.debug("Tweet Time: " + createtime)
 	destroytime = createtime + timedelta(0,ttl*60)
 	now = dt.now(tzlocal())
-	print now
+	logger.debug("Now: " + now)
 	offset = destroytime - now
 	delay = (offset.days *24*60*60) + offset.seconds
-	print "calculated %d delay"%delay
+	logger.debug("calculated %d delay"%delay)
 
 
 	#lazy way: ttl*60seconds = beanstalk delay
 	#delay = ttl*60
 
-	print "[destroy-mon] %s wants to destroy a tweet in %s sec: \n\"%s\"" % (tweet['user']['screen_name'], delay, tweet['id'])
+	logger.info("%s wants to destroy a tweet in %s sec: \"%s\"" % (tweet['user']['screen_name'], delay, tweet['id']))
 
 	job = {}
 	job['id'] = tweet['id']
@@ -101,11 +108,11 @@ if __name__ == "__main__":
 
 	#get list of subscribers
 	userlist = rserver.lrange("users", 0, rserver.llen("users"))
-	print userlist
+	logger.debug(userlist)
 
 	#begin loop
 	for screen_name in userlist:
-		print "Checking timeline for user %s"%screen_name
+		logger.debug("Checking timeline for user %s"%screen_name)
 		#in this area, add try/except areas for db calls and for Twitter info
 		since_id = rserver.get("since_id:"+screen_name)
 		if since_id is None:
@@ -114,7 +121,7 @@ if __name__ == "__main__":
 			since_id = long(since_id)
 		creds = rserver.get("credentials:"+screen_name)
 		if creds is None:
-			print "%s has revoked access"%screen_name
+			logger.warning("%s has revoked access and has no credentials stored"%screen_name)
 			rserver.lrem("users", screen_name, 0)
 		else:
 			creds = json.loads(creds)
@@ -124,11 +131,10 @@ if __name__ == "__main__":
 
 				#for each user who has signed up, retrieve all tweets from user since last we checked
 				tweets =t.get_user_timeline(screen_name=screen_name, since_id=since_id)
-				print "%d tweets received for %s" % (len(tweets), screen_name)
+				logger.debug("%d tweets received for %s" % (len(tweets), screen_name))
 
 				for tweet in tweets:	
 					# 	see if this tweet has been marked to selfdestruct
-					print tweet['id']
 					status = string.find(string.lower(tweet['text']), "#sd")
 					if status > 0:
 						schedule(tweet)
@@ -137,11 +143,12 @@ if __name__ == "__main__":
 					if tweet['id'] > since_id:
 						rserver.set("since_id:"+screen_name, tweet['id'])
 						since_id = tweet['id']
-						print("setting since_id to " + str(tweet['id']))
+						logger.debug("setting since_id to " + str(tweet['id']))
 						#end inner for
 			
 			except TwythonAuthError:
 				# user has revoked access; mark them as disabled and move on
+				logger.warning("%s has revoked access; removing credentials"%screen_name)
 				rserver.delete("credentials:"+screen_name)
 				rserver.lrem("users", screen_name, 0)
 	#end outer for

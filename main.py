@@ -9,6 +9,7 @@ import redis
 import os, sys, json
 import argparse
 import ConfigParser
+import logging
 
 class Status(tornado.web.RequestHandler):
     def get(self):
@@ -47,7 +48,7 @@ class LoginSuccess(tornado.web.RequestHandler):
         oauth_verifier = self.get_argument('oauth_verifier')
         oauth_token = self.get_argument('oauth_token')
         secret = self.get_secure_cookie("sd_auth_secret")
-        print ("trying to finish auth with "+ secret)
+        logger.debug("trying to finish auth with "+ secret)
         twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET, oauth_token, secret)
         final_step = twitter.get_authorized_tokens(oauth_verifier)
         screen_name = final_step['screen_name']
@@ -68,9 +69,8 @@ class TwitterLoginHandler(tornado.web.RequestHandler):
     def get(self):
         if not self.get_secure_cookie('selfdestruct'):
             twitter = Twython(CONSUMER_KEY, CONSUMER_SECRET)
-            print (CONSUMER_KEY + " : " + CONSUMER_SECRET)
             auth = twitter.get_authentication_tokens(callback_url= SDHOST+":"+SDPORT+'/success')
-            print ("Back in python from twitter. ")
+            logger.debug("Back in python from twitter.")
             oauth_token = auth['oauth_token']
             oauth_token_secret = auth['oauth_token_secret']
             self.set_secure_cookie("sd_auth_token",oauth_token)
@@ -97,6 +97,12 @@ class Intro(tornado.web.RequestHandler):
 
 ###################################################
 
+# setup logging
+logger = logging.getLogger("selfdestruct")
+logger.setLevel(logging.DEBUG)
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=FORMAT)
+
 # parse arguments
 argparser = argparse.ArgumentParser()
 argparser.add_argument('config', help='path to config file')
@@ -116,7 +122,7 @@ try:
     COOKIE_SECRET = cfg.get('selfdestruct', 'cookie_secret')
 
 except:
-    print "Please set your config variables properly in %s before running main.py." % args.config
+    logger.critical("Please set your config variables properly in %s before running main.py." % args.config)
     sys.exit(2)
 
 conn = tornadoredis.Client(host=REDIS_HOST, port=REDIS_PORT)
@@ -145,6 +151,6 @@ if __name__ == "__main__":
 
 	#start tornado listener for web interface
     application.listen(SDPORT)
-    print("Selfdestruct Logger Inner starting on port %s" %SDPORT)
+    logger.info("Selfdestruct Logger Inner starting on port %s" %SDPORT)
     tornado.ioloop.IOLoop.instance().start()
 

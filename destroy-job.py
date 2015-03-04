@@ -8,12 +8,18 @@ import beanstalkc
 import redis
 import argparse
 import ConfigParser
+import logging
+
+# setup logging
+logger = logging.getLogger("selfdestruct")
+logger.setLevel(logging.DEBUG)
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=FORMAT)
 
 # parse arguments
 argparser = argparse.ArgumentParser()
 argparser.add_argument('config', help='path to config file')
 args = argparser.parse_args()
-
 
 # read application config
 cfg = ConfigParser.ConfigParser()
@@ -30,7 +36,7 @@ try:
     REDIS_PORT = int(cfg.get('redis', 'port'))
 
 except:
-    print "Please set your config variables properly in %s before running destroy-job.py." %args.config
+    logger.critical("Please set your config variables properly in %s before running destroy-job.py." %args.config)
     sys.exit(2)
 
 beanstalk = beanstalkc.Connection(host=BEANSTALK_HOST, port=BEANSTALK_PORT)
@@ -43,7 +49,7 @@ rserver = redis.Redis(REDIS_HOST, REDIS_PORT)
 while True:
     job = beanstalk.reserve()
     jobstr = job.body
-    #print jobstr
+    #TODO: delete job only after tweet is deleted, and come up with convoluted strategy to keep jobs that fail
     job.delete()
     tweet = json.loads(jobstr)
 
@@ -56,9 +62,10 @@ while True:
         t.destroy_status(id=tweet['id'])
 
         #INCREMENT COUNT IN REDIS
-        print ("deleted tweet "+ str(tweet['id']))
+        logger.info("deleted tweet "+ str(tweet['id']))
         rserver.incr("deletecount:"+tweet['screen_name'], 1)
     except TwythonAuthError:
         # user has revoked access; mark them as disabled and move on
+        logger.warning("%s has revoked access; removing credentials"%screen_name)
         rserver.delete("credentials:"+screen_name)
         rserver.lrem("users", screen_name, 0)
