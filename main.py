@@ -111,6 +111,7 @@ try:
     SDPORT = cfg.get('selfdestruct', 'port')
     REDIS_HOST = cfg.get('redis', 'host')
     REDIS_PORT = int(cfg.get('redis', 'port'))
+    COOKIE_SECRET = cfg.get('selfdestruct', 'cookie_secret')
 
 except:
     print "Please set your config variables properly in %s before running main.py." % args.config
@@ -123,7 +124,7 @@ rserver = redis.Redis(REDIS_HOST, REDIS_PORT)
 settings = dict(
     template_path=os.path.join(os.path.dirname(__file__), "templates"),
     static_path=os.path.join(os.path.dirname(__file__), "static"),
-    cookie_secret="delete-my-tw33ts",
+    cookie_secret=COOKIE_SECRET,
     twitter_consumer_key=CONSUMER_KEY,
     twitter_consumer_secret=CONSUMER_SECRET,
     debug=True
