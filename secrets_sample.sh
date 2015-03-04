@@ -1,9 +1,0 @@
-export SDAPP_CONSUMER_KEY='AAA'
-export SDAPP_CONSUMER_SECRET='BBB'
-export SDAPP_HOST='http://localhost'
-export SDAPP_PORT=7890
-export SDAPP_BEANSTALK_HOST='localhost'
-export SDAPP_BEANSTALK_PORT=14711
-export SDAPP_BEANSTALK_TUBE='destroytweets'
-export SDAPP_REDIS_HOST='localhost'
-export SDAPP_REDIS_PORT=6379
