@@ -5,25 +5,29 @@
     <title>Self-Destruct</title>
     <link rel="stylesheet" type="text/css" href="../static/css/reset.css">
     <link rel="stylesheet" type="text/css" href="../static/css/list.css">
+    <link href='http://fonts.googleapis.com/css?family=Dosis:200,300,400,700|Source+Code+Pro:400,700' rel='stylesheet' type='text/css'>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <!--typekit-->
     <script type="text/javascript" src="//use.typekit.net/sfu1xqz.js"></script>
     <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+    <meta name="viewport" content="width=device-width">
 
 </head>
 <body>
 <div id="container">
-    <div id="rnd-intro"><a href="http://www.nytlabs.com"><img src="../static/img/nytlabs.png" /></a></div> 
 <!--     <div id="nav">
         <div id="username"></div> &nbsp;|&nbsp; <a href="/logout" id="logout">Sign out</a>
     </div> -->
 
     <br class="clear" />
     <div id="logo">
-        Selfdestruct Logo Here
+        <img src="../static/img/bird.png" id="bird" />
     </div>
+    <p id="title">
+        selfdestruct
+    </p>
 
-   <div id="intro">
+   <div id="intro" style="text-align:center;">
         <p>
             Hi, {{ screen_name }}. Thanks for signing up for Selfdestruct.
         </p>
@@ -31,10 +35,10 @@
             So far, {{ count }} tweets have been deleted for you from your account.
         </p>
    </div>
-    <a href="/settings" id="login">Adjust Selfdestruct Settings / Logout</a>
+
 
    <!--footer-->
-    <div id="footer">Selfdestruct is a project of <a href="http://www.nytlabs.com">The New York Times R&amp;D Lab</a> &nbsp;|&nbsp; <a href="http://www.nytimes.com/content/help/rights/privacy/policy/privacy-policy.html">Privacy</a> &nbsp;|&nbsp; <a href="http://www.nytimes.com/content/help/rights/terms/terms-of-service.html">Terms of Service</a></div>
+    <div id="footer"><a href="http://www.nytlabs.com"><img src="../static/img/nytlabs.png" id="nytlabs" /></a><br /><br /> selfdestruct is a project of <a href="http://www.nytlabs.com">The New York Times R&amp;D Lab</a> <br /> <a href="http://www.nytimes.com/content/help/rights/privacy/policy/privacy-policy.html">Privacy</a> &nbsp;|&nbsp; <a href="http://www.nytimes.com/content/help/rights/terms/terms-of-service.html">Terms of Service</a></div>
 
 </div>
 
