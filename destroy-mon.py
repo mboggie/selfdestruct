@@ -80,10 +80,10 @@ def schedule(tweet):
 	# NOTE: Twitter "created_at" attribute is always in UTC
 	createstring = tweet['created_at']
 	createtime = parse(createstring)
-	logger.debug("Tweet Time: " + createtime)
+	logger.debug("Tweet Time: " + createtime.isoformat())
 	destroytime = createtime + timedelta(0,ttl*60)
 	now = dt.now(tzlocal())
-	logger.debug("Now: " + now)
+	logger.debug("Now: " + now.isoformat())
 	offset = destroytime - now
 	delay = (offset.days *24*60*60) + offset.seconds
 	logger.debug("calculated %d delay"%delay)
