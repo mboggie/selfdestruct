@@ -101,6 +101,7 @@ def schedule(tweet):
 
 if __name__ == "__main__":
 
+	logger.info("Executing twitter stream monitor")
 	#connect to Twitter
 	# t = Twython(CONSUMER_KEY, CONSUMER_SECRET, oauth_version=2)
 	# authtoken = t.obtain_access_token()
@@ -137,7 +138,14 @@ if __name__ == "__main__":
 					# 	see if this tweet has been marked to selfdestruct
 					status = string.find(string.lower(tweet['text']), "#sd")
 					if status > 0:
-						schedule(tweet)
+						#found a tweet. Validate that it's okay to delete:
+
+						#if tweet is an @ reply, do not allow deletion
+						replycheck = string.find(tweet['text'], "@")
+						#TODO: other checks may go here later
+
+						if replycheck != 0
+							schedule(tweet)
 
 					#	reset this user's pointer so future calls don't return tweets we've already seen
 					if tweet['id'] > since_id:

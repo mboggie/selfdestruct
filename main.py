@@ -37,6 +37,8 @@ class Status(tornado.web.RequestHandler):
             self.redirect("/")
         else:
             count = rserver.get("deletecount:"+screen_name)
+            if count is None:
+                count = 0
     		#tk: show stats of what's been deleted, what's queued, etc
     		#for now, just render a "yeah, I know you" page
             self.render("status.html", count=count, screen_name=screen_name)

@@ -1,0 +1,1 @@
+* * * * * /home/ubuntu/selfdestruct/destroy-mon.py /home/ubuntu/selfdestruct/selfdestruct.cfg >> /mnt/log/selfdestruct.monitor.log 2>&1

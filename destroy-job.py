@@ -46,6 +46,8 @@ beanstalk.watch(BEANSTALK_TUBE)
 #connect to redis
 rserver = redis.Redis(REDIS_HOST, REDIS_PORT)
 
+logger.info("Starting up deletion queue worker")
+
 while True:
     job = beanstalk.reserve()
     jobstr = job.body
