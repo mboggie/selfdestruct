@@ -144,7 +144,7 @@ if __name__ == "__main__":
 						replycheck = string.find(tweet['text'], "@")
 						#TODO: other checks may go here later
 
-						if replycheck != 0
+						if replycheck != 0:
 							schedule(tweet)
 
 					#	reset this user's pointer so future calls don't return tweets we've already seen
