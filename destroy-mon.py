@@ -66,7 +66,10 @@ def schedule(tweet):
 	if searchresult: 
 		ttl = searchresult.group(1)
 		if len(ttl) > 0:
-			ttl = int(ttl)
+			if (int(ttl)>DEFAULT_TTL):
+				ttl = int(ttl)
+			else:
+				ttl = DEFAULT_TTL
 		else:
 			ttl = DEFAULT_TTL
  	else:
