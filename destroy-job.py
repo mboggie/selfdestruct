@@ -55,19 +55,23 @@ while True:
     job.delete()
     tweet = json.loads(jobstr)
 
-    #job will consist of tweet[id] and tweet[screenname] -- need to retrieve token and secret from redis
-    cred = rserver.get("credentials:"+tweet['screen_name'])
-    cred = json.loads(cred)
+
 
     try:
+        #job will consist of tweet[id] and tweet[screenname] -- need to retrieve token and secret from redis
+        cred = rserver.get("credentials:"+tweet['screen_name'])
+        cred = json.loads(cred)
         t = Twython(CONSUMER_KEY, CONSUMER_SECRET, cred['token'], cred['secret'])
         t.destroy_status(id=tweet['id'])
 
         #INCREMENT COUNT IN REDIS
         logger.info("deleted tweet "+ str(tweet['id']))
         rserver.incr("deletecount:"+tweet['screen_name'], 1)
+        rserver.incr("globaldeletecount", 1)
     except TwythonAuthError:
         # user has revoked access; mark them as disabled and move on
         logger.warning("%s has revoked access; removing credentials"%screen_name)
+        rserver.delete("since_id"+screen_name)
+        rserver.delete("deletecount"+screen_name)
         rserver.delete("credentials:"+screen_name)
         rserver.lrem("users", screen_name, 0)

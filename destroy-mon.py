@@ -87,12 +87,13 @@ def schedule(tweet):
 	offset = destroytime - now
 	delay = (offset.days *24*60*60) + offset.seconds
 	logger.debug("calculated %d delay"%delay)
-
+	if delay < 0:
+		delay = 1
 
 	#lazy way: ttl*60seconds = beanstalk delay
 	#delay = ttl*60
 
-	logger.info("%s wants to destroy a tweet in %s sec: \"%s\"" % (tweet['user']['screen_name'], delay, tweet['id']))
+	logger.info("tweet %s will be destroyed in %s sec" % (tweet['id'], delay))
 
 	job = {}
 	job['id'] = tweet['id']
@@ -111,7 +112,7 @@ if __name__ == "__main__":
 	# t = Twython(CONSUMER_KEY, access_token=authtoken)
 
 	#get list of subscribers
-	userlist = rserver.lrange("users", 0, rserver.llen("users"))
+	userlist = rserver.lrange("users", 0, -1)
 	logger.debug(userlist)
 
 	#begin loop
@@ -126,6 +127,8 @@ if __name__ == "__main__":
 		creds = rserver.get("credentials:"+screen_name)
 		if creds is None:
 			logger.warning("%s has revoked access and has no credentials stored"%screen_name)
+			rserver.delete("since_id:"+screen_name)
+			rserver.delete("deletecount:"+screen_name)
 			rserver.lrem("users", screen_name, 0)
 		else:
 			creds = json.loads(creds)
@@ -159,8 +162,10 @@ if __name__ == "__main__":
 			
 			except TwythonAuthError:
 				# user has revoked access; mark them as disabled and move on
-				logger.warning("%s has revoked access; removing credentials"%screen_name)
+				logger.warning("%s has revoked access; removing records"%screen_name)
 				rserver.delete("credentials:"+screen_name)
+				rserver.delete("since_id:"+screen_name)
+				rserver.delete("deletecount:"+screen_name)
 				rserver.lrem("users", screen_name, 0)
 	#end outer for
 #end
