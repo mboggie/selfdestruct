@@ -143,7 +143,7 @@ if __name__ == "__main__":
 				for tweet in tweets:	
 					# 	see if this tweet has been marked to selfdestruct
 					status = string.find(string.lower(tweet['text']), "#sd")
-					if status > 0:
+					if status > -1: #fix #4
 						#found a tweet. Validate that it's okay to delete:
 
 						#if tweet is an @ reply, do not allow deletion
