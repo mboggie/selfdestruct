@@ -102,7 +102,7 @@ class Intro(tornado.web.RequestHandler):
 
 # setup logging
 logger = logging.getLogger("selfdestruct")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(format=FORMAT)
 
